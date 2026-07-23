@@ -43,10 +43,9 @@ services:
 
   peer-cgn:
     container_name: peer0.cgn.example.com
-    privileged: true
-    image: my-fabric-peer:2.5.4
+    image: hyperledger/fabric-peer:2.5.4
     environment:
-      - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=abac-genomic_test
       - FABRIC_LOGGING_SPEC=INFO
       - CORE_PEER_TLS_ENABLED=true
@@ -72,7 +71,7 @@ services:
       - "7051:7051"
       - "7052:7052"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/host/var/run/docker.sock
       - ./organizations/peerOrganizations/cgn.example.com/peers/peer0.cgn.example.com/msp:/etc/hyperledger/fabric/msp
       - ./organizations/peerOrganizations/cgn.example.com/peers/peer0.cgn.example.com/tls:/etc/hyperledger/fabric/tls
       - peer0.cgn.example.com:/var/hyperledger/production
@@ -97,10 +96,9 @@ services:
 
   peer-ib:
     container_name: peer0.ib.example.com
-    privileged: true
-    image: my-fabric-peer:2.5.4
+    image: hyperledger/fabric-peer:2.5.4
     environment:
-      - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=abac-genomic_test
       - FABRIC_LOGGING_SPEC=INFO
       - CORE_PEER_TLS_ENABLED=true
@@ -126,7 +124,7 @@ services:
       - "9051:9051"
       - "9052:9052"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/host/var/run/docker.sock
       - ./organizations/peerOrganizations/ib.example.com/peers/peer0.ib.example.com/msp:/etc/hyperledger/fabric/msp
       - ./organizations/peerOrganizations/ib.example.com/peers/peer0.ib.example.com/tls:/etc/hyperledger/fabric/tls
       - peer0.ib.example.com:/var/hyperledger/production
@@ -151,10 +149,9 @@ services:
 
   peer-hu:
     container_name: peer0.hu.example.com
-    privileged: true
-    image: my-fabric-peer:2.5.4
+    image: hyperledger/fabric-peer:2.5.4
     environment:
-      - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=abac-genomic_test
       - FABRIC_LOGGING_SPEC=INFO
       - CORE_PEER_TLS_ENABLED=true
@@ -180,7 +177,7 @@ services:
       - "11051:11051"
       - "11052:11052"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/host/var/run/docker.sock
       - ./organizations/peerOrganizations/hu.example.com/peers/peer0.hu.example.com/msp:/etc/hyperledger/fabric/msp
       - ./organizations/peerOrganizations/hu.example.com/peers/peer0.hu.example.com/tls:/etc/hyperledger/fabric/tls
       - peer0.hu.example.com:/var/hyperledger/production
@@ -210,7 +207,7 @@ services:
     stdin_open: true
     environment:
       - GOPATH=/opt/gopath
-      - CORE_VM_ENDPOINT=unix:///var/run/docker.sock
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
       - FABRIC_LOGGING_SPEC=INFO
       - CORE_PEER_ID=cli
       - CORE_PEER_ADDRESS=peer0.cgn.example.com:7051
@@ -223,7 +220,7 @@ services:
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
     command: /bin/bash
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/host/var/run/docker.sock
       - ./chaincodes:/opt/gopath/src/github.com/chaincodes
       - ./organizations:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
       - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/

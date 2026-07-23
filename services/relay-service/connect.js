@@ -18,19 +18,14 @@ async function newGrpcConnection() {
     const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
     return new grpc.Client(PEER_ENDPOINT, tlsCredentials, { 'grpc.ssl_target_name_override': PEER_HOST_ALIAS });
 }
-
 async function newIdentity() {
     const files = await fs.readdir(CERT_DIRECTORY_PATH);
     const certFile = files.find(f => f.endsWith('.pem')) || files[0];
-    const credentials = await fs.readFile(path.join(CERT_DIRECTORY_PATH, certFile));
-    return { mspId: MSP_ID, credentials };
+    return { mspId: MSP_ID, credentials: await fs.readFile(path.join(CERT_DIRECTORY_PATH, certFile)) };
 }
-
 async function newSigner() {
     const files = await fs.readdir(KEY_DIRECTORY_PATH);
     const keyFile = files.find(f => f.endsWith('_sk')) || files[0];
-    const privateKeyPem = await fs.readFile(path.join(KEY_DIRECTORY_PATH, keyFile));
-    return signers.newPrivateKeySigner(crypto.createPrivateKey(privateKeyPem));
+    return signers.newPrivateKeySigner(crypto.createPrivateKey(await fs.readFile(path.join(KEY_DIRECTORY_PATH, keyFile))));
 }
-
 module.exports = { newGrpcConnection, newIdentity, newSigner, MSP_ID };

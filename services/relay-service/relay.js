@@ -5,7 +5,7 @@ const { newGrpcConnection, newIdentity, newSigner } = require('./connect');
 
 const GLOBAL_CHANNEL = 'global-channel';
 const PROJECT_CHANNEL = 'project-channel';
-const GOVERNANCE_CHAINCODE = 'gouvernancecc';
+const GOVERNANCE_CHAINCODE = 'gouvernancecc'; // Nom exact de ton chaincode
 const POLICY_CHAINCODE = 'policycc';
 const ATTESTATION_EVENT_NAME = 'AttestationValidated';
 const utf8Decoder = new TextDecoder();
@@ -13,7 +13,10 @@ const utf8Decoder = new TextDecoder();
 async function main() {
     const client = await newGrpcConnection();
     const gateway = connect({
-        client, identity: await newIdentity(), signer: await newSigner(), hash: hash.sha256,
+        client,
+        identity: await newIdentity(),
+        signer: await newSigner(),
+        hash: hash.sha256,
         evaluateOptions: () => ({ deadline: Date.now() + 5000 }),
         endorseOptions: () => ({ deadline: Date.now() + 15000 }),
         submitOptions: () => ({ deadline: Date.now() + 5000 }),
@@ -69,14 +72,14 @@ async function handleEvent(event, policyContract, checkpointer) {
         return;
     }
 
-    // CORRECTION : Adapter aux champs réels de la struct AccessResult en Go
-    const isValid = attestationResult.status === "PERMIT";
-    const attId = attestationResult.attestation_id || "auto_generated_" + Date.now();
+    // CORRECTION : On vérifie explicitement le champ booléen "valid" du payload
+    const isValid = attestationResult.valid === true;
+    const attId = attestationResult.attestation_id || 'inconnu';
 
     console.log(`[relay] événement reçu : attestation_id=${attId} valid=${isValid}`);
 
     if (!isValid) {
-        console.log(`[relay] attestation invalide (status: ${attestationResult.status}), non relayée.`);
+        console.log(`[relay] attestation invalide (reason: ${attestationResult.deny_reason || 'non spécifié'}), non relayée.`);
         await checkpointer.checkpointChaincodeEvent(event);
         return;
     }
@@ -89,6 +92,7 @@ async function handleEvent(event, policyContract, checkpointer) {
         console.log(`[relay] décision enregistrée : ${decision.decision}`);
     } catch (submitError) {
         console.error('[relay] échec de soumission à PolicyContract :', submitError.message);
+        if (submitError.details) console.error('[relay] DETAILS :', submitError.details);
     }
     await checkpointer.checkpointChaincodeEvent(event);
 }

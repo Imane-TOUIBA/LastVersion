@@ -9,7 +9,7 @@ app.use(express.json());
 let gateway, contract;
 
 async function initFabric() {
-    console.log("[Portail HU] Connexion a Fabric en tant que HUMSP...");
+    console.log("[Portail HU] Connexion à Fabric en tant que HUMSP...");
     const client = await newGrpcConnection();
     gateway = connect({
         client, identity: await newIdentity(), signer: await newSigner(), hash: hash.sha256,
@@ -19,9 +19,9 @@ async function initFabric() {
         commitStatusOptions: () => ({ deadline: Date.now() + 60000 }),
     });
     const network = gateway.getNetwork('global-channel');
-    // CORRECTION : le contrat cible est 'consentcc'
-    contract = network.getContract('consentcc');
-    console.log("[Portail HU] Connecte et pret a recevoir les requetes.");
+    // Correction : cibler le bon chaincode et le bon contrat
+    contract = network.getContract('consentcc', 'ConsentContract');
+    console.log("[Portail HU] Connecté et prêt à recevoir les requêtes.");
 }
 
 // 1. Enregistrer un consentement
@@ -29,18 +29,18 @@ app.post('/api/consent', async (req, res) => {
     try {
         const { patientId, orgId, resourceId, projectId, expiresAt } = req.body;
         await contract.submitTransaction('RegisterConsent', patientId, orgId, resourceId, projectId, expiresAt);
-        res.json({ success: true, message: "Consentement enregistre sur le ledger." });
+        res.json({ success: true, message: "Consentement enregistré sur le ledger." });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// 2. Revoquer un consentement
+// 2. Révoquer un consentement (NOUVEAU)
 app.delete('/api/consent', async (req, res) => {
     try {
         const { patientId, orgId, resourceId, projectId } = req.body;
         await contract.submitTransaction('RevokeConsent', patientId, orgId, resourceId, projectId);
-        res.json({ success: true, message: "Consentement revoque sur le ledger." });
+        res.json({ success: true, message: "Consentement révoqué avec succès sur le ledger." });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -50,9 +50,10 @@ app.delete('/api/consent', async (req, res) => {
 app.get('/api/consent', async (req, res) => {
     try {
         const { patientId, orgId, resourceId, projectId } = req.query;
-        const resultBytes = await contract.evaluateTransaction('GetConsent', patientId, orgId, resourceId, projectId);
-        const result = JSON.parse(new TextDecoder().decode(resultBytes));
-        res.json({ success: true, data: result });
+        const resultBytes = await contract.evaluateTransaction('CheckConsent', patientId, orgId, resourceId, projectId);
+        // La réponse est un booléen JSON ("true" ou "false")
+        const isValid = resultBytes.toString() === 'true';
+        res.json({ success: true, data: { isValid: isValid } });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -60,7 +61,7 @@ app.get('/api/consent', async (req, res) => {
 
 const PORT = 3000;
 initFabric().then(() => {
-    app.listen(PORT, () => console.log(`[Portail HU] Serveur web en ecoute sur http://localhost:${PORT}`));
+    app.listen(PORT, () => console.log(`[Portail HU] Serveur web en écoute sur http://localhost:${PORT}`));
 }).catch(err => {
     console.error("[Portail HU] Erreur fatale d'initialisation :", err);
     process.exit(1);

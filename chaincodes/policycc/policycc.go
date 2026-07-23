@@ -49,6 +49,34 @@ func (pc *PolicyContract) GetResourcePolicy(ctx contractapi.TransactionContextIn
 	return &policy, nil
 }
 
+// FONCTION MANQUANTE AJOUTÉE : RegisterResourcePolicy
+func (pc *PolicyContract) RegisterResourcePolicy(ctx contractapi.TransactionContextInterface, resourceID, ownerOrg, authorizedOrgsJSON, allowedActionsJSON, minClearance, accessWindowStart, accessWindowEnd string) error {
+	callerMSP, _ := ctx.GetClientIdentity().GetMSPID()
+	if callerMSP != ownerOrg {
+		return fmt.Errorf("seule l'organisation propriétaire %s peut enregistrer cette politique", ownerOrg)
+	}
+	
+	var authorizedOrgs []string
+	json.Unmarshal([]byte(authorizedOrgsJSON), &authorizedOrgs)
+	
+	var allowedActions []string
+	json.Unmarshal([]byte(allowedActionsJSON), &allowedActions)
+
+	policy := ResourcePolicy{
+		ResourceID:        resourceID,
+		OwnerOrg:          ownerOrg,
+		AuthorizedOrgs:    authorizedOrgs,
+		AllowedActions:    allowedActions,
+		MinClearance:      minClearance,
+		AccessWindowStart: accessWindowStart,
+		AccessWindowEnd:   accessWindowEnd,
+	}
+	
+	key, _ := resourcePolicyKey(ctx, resourceID)
+	data, _ := json.Marshal(policy)
+	return ctx.GetStub().PutState(key, data)
+}
+
 type AttestationResultInput struct {
 	AttestationID string `json:"attestation_id"`
 	RequesterOrg  string `json:"requester_org"`
@@ -168,6 +196,7 @@ func contains(list []string, value string) bool {
 	return false
 }
 
+// FONCTION MAIN AJOUTÉE : Indispensable pour compiler le chaincode
 func main() {
 	chaincode, err := contractapi.NewChaincode(&PolicyContract{})
 	if err != nil {

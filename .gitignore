@@ -2,20 +2,20 @@
 node_modules/
 package-lock.json
 
-# Artefacts cryptographiques et de canal (générés)
+# Artefacts cryptographiques et de canal (générés par les scripts)
 organizations/
 channel-artifacts/
 system-genesis-block/
 
-# Fichiers de configuration locaux et logs
+# Fichiers de configuration locaux, wallets et logs
 *.log
 .env
 wallet/
 
-# Archives de chaincodes (générées)
+# Archives de chaincodes (générées localement, sauf si vous voulez les versionner)
 *.tar.gz
 
-# Fichiers temporaires
+# Fichiers temporaires et éditeurs
 *.swp
 *.swo
 *~

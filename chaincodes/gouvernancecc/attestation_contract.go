@@ -139,7 +139,7 @@ func (ac *AttestationContract) SubmitAttestation(ctx contractapi.TransactionCont
 			return ac.storeAndEmit(ctx, result)
 		}
 		consentArgs := [][]byte{[]byte("CheckConsent"), []byte(attest.PatientID), []byte(attest.RequesterOrg), []byte(attest.ResourceID), []byte(attest.ProjectID)}
-		response := ctx.GetStub().InvokeChaincode("consentcc", consentArgs, "")
+		response := ctx.GetStub().InvokeChaincode("consentcc", consentArgs, "global-channel")
 		var consentOK bool
 		if response.Status == 200 {
 			json.Unmarshal(response.Payload, &consentOK)
