@@ -1,0 +1,14 @@
+{
+  "network_name": "genomic-consortium",
+  "domain": "example.com",
+  "orderer": { "name": "orderer", "port": 7050, "msp_id": "OrdererMSP" },
+  "organizations": [
+    { "name": "CGN", "msp_id": "CGNMSP", "peer": { "name": "peer0", "port": 7051, "chaincode_port": 7052, "couchdb_port": 5984 } },
+    { "name": "IB", "msp_id": "IBMSP", "peer": { "name": "peer0", "port": 9051, "chaincode_port": 9052, "couchdb_port": 9984 } },
+    { "name": "HU", "msp_id": "HUMSP", "peer": { "name": "peer0", "port": 11051, "chaincode_port": 11052, "couchdb_port": 11984 } }
+  ],
+  "channels": [
+    { "name": "global-channel", "organizations": ["CGN", "IB", "HU"] },
+    { "name": "project-channel", "organizations": ["CGN", "IB"] }
+  ]
+}

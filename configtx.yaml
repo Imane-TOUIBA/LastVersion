@@ -1,0 +1,179 @@
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: organizations/ordererOrganizations/example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+    OrdererEndpoints:
+      - orderer.example.com:7050
+  - &CGNOrg
+    Name: CGNOrg
+    ID: CGNMSP
+    MSPDir: organizations/peerOrganizations/cgn.example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('CGNMSP.admin', 'CGNMSP.peer', 'CGNMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('CGNMSP.admin', 'CGNMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('CGNMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('CGNMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.cgn.example.com
+        Port: 7051
+  - &IBOrg
+    Name: IBOrg
+    ID: IBMSP
+    MSPDir: organizations/peerOrganizations/ib.example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('IBMSP.admin', 'IBMSP.peer', 'IBMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('IBMSP.admin', 'IBMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('IBMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('IBMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.ib.example.com
+        Port: 9051
+  - &HUOrg
+    Name: HUOrg
+    ID: HUMSP
+    MSPDir: organizations/peerOrganizations/hu.example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('HUMSP.admin', 'HUMSP.peer', 'HUMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('HUMSP.admin', 'HUMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('HUMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('HUMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.hu.example.com
+        Port: 11051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer.example.com:7050
+  EtcdRaft:
+    Consenters:
+    - Host: orderer.example.com
+      Port: 7050
+      ClientTLSCert: organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+      ServerTLSCert: organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  GlobalChannel:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *CGNOrg
+        - *IBOrg
+        - *HUOrg
+
+  ProjectChannel:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *CGNOrg
+        - *IBOrg
+

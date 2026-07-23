@@ -1,0 +1,25 @@
+# Dépendances Node.js
+node_modules/
+package-lock.json
+
+# Données cryptographiques et artefacts de canal (générés par les scripts)
+organizations/
+channel-artifacts/
+system-genesis-block/
+
+# Fichiers de configuration locaux et logs
+*.log
+.env
+wallet/
+
+# Binaires compilés et fichiers temporaires
+*.tar.gz
+!consentcc_ccaas.tar.gz
+!gouvernancecc_ccaas.tar.gz
+!policycc_ccaas.tar.gz
+*.swp
+*.swo
+*~
+
+# Docker volumes et données persistantes
+ledgerData/
