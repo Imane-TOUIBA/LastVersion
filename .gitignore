@@ -2,7 +2,7 @@
 node_modules/
 package-lock.json
 
-# Données cryptographiques et artefacts de canal (générés par les scripts)
+# Artefacts cryptographiques et de canal (générés)
 organizations/
 channel-artifacts/
 system-genesis-block/
@@ -12,14 +12,11 @@ system-genesis-block/
 .env
 wallet/
 
-# Binaires compilés et fichiers temporaires
+# Archives de chaincodes (générées)
 *.tar.gz
-!consentcc_ccaas.tar.gz
-!gouvernancecc_ccaas.tar.gz
-!policycc_ccaas.tar.gz
+
+# Fichiers temporaires
 *.swp
 *.swo
 *~
-
-# Docker volumes et données persistantes
-ledgerData/
+.DS_Store
