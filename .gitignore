@@ -25,3 +25,4 @@ channel-artifacts/
 node_modules/
 *.log
 benchmark_results/
+*.tar.gz
