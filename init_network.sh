@@ -1,71 +1,109 @@
 #!/bin/bash
+# Script d'initialisation des ledgers avec les données de démonstration
+# Usage: ./init_network.sh (à exécuter APRÈS ./setup_all.sh et ./deploy_chaincodes.sh)
+
 set -e
-export PATH=$HOME/fabric-samples/bin:$PATH
-export FABRIC_CFG_PATH=$PWD
 
-echo "=== 1. Nettoyage ==="
-docker compose -f docker-compose.yaml down --volumes --remove-orphans 2>/dev/null || true
-rm -rf organizations channel-artifacts
+echo "=== Initialisation des données du réseau ==="
 
-echo "=== 2. Certificats ==="
-mkdir -p organizations
-cryptogen generate --config=./crypto-config.yaml --output="organizations"
+export PATH=$HOME/bin:$PATH
+export FABRIC_CFG_PATH=$HOME/config
+export CORE_PEER_TLS_ENABLED=true
+export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 
-echo "=== 3. Artefacts de canal ==="
-mkdir -p channel-artifacts
-configtxgen -profile GlobalChannel -outputBlock ./channel-artifacts/global-channel.block -channelID global-channel
-configtxgen -profile ProjectChannel -outputBlock ./channel-artifacts/project-channel.block -channelID project-channel
+PEER_CGN="localhost:7051"
+TLS_CGN="$PWD/organizations/peerOrganizations/cgn.example.com/peers/peer0.cgn.example.com/tls/ca.crt"
+PEER_IBM="localhost:9051"
+TLS_IBM="$PWD/organizations/peerOrganizations/ib.example.com/peers/peer0.ib.example.com/tls/ca.crt"
+PEER_HU="localhost:11051"
+TLS_HU="$PWD/organizations/peerOrganizations/hu.example.com/peers/peer0.hu.example.com/tls/ca.crt"
 
-echo "=== 4. Demarrage ==="
-docker compose -f docker-compose.yaml up -d
-echo "Attente de 15 secondes..."
-sleep 15
+# 1. Initialisation de consentcc
+echo "--- Initialisation de consentcc ---"
+export CORE_PEER_LOCALMSPID=CGNMSP
+export CORE_PEER_ADDRESS=$PEER_CGN
+export CORE_PEER_TLS_ROOTCERT_FILE=$TLS_CGN
+export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/cgn.example.com/users/Admin@cgn.example.com/msp
 
-echo "=== 5. Contournement DNS (Injection /etc/hosts) ==="
-# Récupérer les IP réelles des conteneurs
-ORDERER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' orderer.example.com)
-PEER_CGN_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' peer0.cgn.example.com)
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile $ORDERER_CA \
+  -C global-channel -n consentcc \
+  --peerAddresses $PEER_CGN --tlsRootCertFiles $TLS_CGN \
+  --peerAddresses $PEER_IBM --tlsRootCertFiles $TLS_IBM \
+  --peerAddresses $PEER_HU --tlsRootCertFiles $TLS_HU \
+  --waitForEvent \
+  -c '{"function":"InitLedger","Args":[]}'
 
-echo "Injection de l'IP de l'Orderer ($ORDERER_IP) dans le conteneur cli..."
-docker exec cli sh -c "echo '$ORDERER_IP orderer.example.com' >> /etc/hosts"
-docker exec cli sh -c "echo '$PEER_CGN_IP peer0.cgn.example.com' >> /etc/hosts"
+# 2. Initialisation de gouvernancecc
+echo "--- Initialisation de gouvernancecc ---"
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile $ORDERER_CA \
+  -C global-channel -n gouvernancecc \
+  --peerAddresses $PEER_CGN --tlsRootCertFiles $TLS_CGN \
+  --peerAddresses $PEER_IBM --tlsRootCertFiles $TLS_IBM \
+  --peerAddresses $PEER_HU --tlsRootCertFiles $TLS_HU \
+  --waitForEvent \
+  -c '{"function":"InitLedger","Args":[]}'
 
-# Vérification que la résolution fonctionne maintenant
-echo "Test de résolution depuis le conteneur cli :"
-docker exec cli ping -c 1 orderer.example.com || true
+# 3. Initialisation de policycc
+echo "--- Initialisation de policycc ---"
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile $ORDERER_CA \
+  -C project-channel -n policycc \
+  --peerAddresses $PEER_CGN --tlsRootCertFiles $TLS_CGN \
+  --peerAddresses $PEER_IBM --tlsRootCertFiles $TLS_IBM \
+  --waitForEvent \
+  -c '{"function":"InitLedger","Args":[]}'
 
-echo "=== 6. Creation et jointure des canaux ==="
-exec_peer() {
-    docker exec -e CORE_PEER_LOCALMSPID=$3 \
-                -e CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/${1}.example.com/users/Admin@${1}.example.com/msp \
-                -e CORE_PEER_ADDRESS=peer0.${1}.example.com:$2 \
-                -e CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/${1}.example.com/peers/peer0.${1}.example.com/tls/ca.crt \
-                cli $4
-}
+# 4. Enregistrement de la ressource "o2b"
+echo "--- Enregistrement de la ressource o2b ---"
+export CORE_PEER_LOCALMSPID=IBMSP
+export CORE_PEER_ADDRESS=$PEER_IBM
+export CORE_PEER_TLS_ROOTCERT_FILE=$TLS_IBM
+export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/ib.example.com/users/Admin@ib.example.com/msp
 
-CA_FILE="/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
-ORDERER="orderer.example.com:7050"
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile $ORDERER_CA \
+  -C global-channel -n gouvernancecc \
+  --peerAddresses $PEER_CGN --tlsRootCertFiles $TLS_CGN \
+  --peerAddresses $PEER_IBM --tlsRootCertFiles $TLS_IBM \
+  --peerAddresses $PEER_HU --tlsRootCertFiles $TLS_HU \
+  --waitForEvent \
+  -c '{"function":"AttestationContract:RegisterResource","Args":["o2b", "IBMSP", "true", "Oncologie"]}'
 
-docker cp ./channel-artifacts/global-channel.block cli:/opt/gopath/src/github.com/hyperledger/fabric/peer/global-channel.block
-docker cp ./channel-artifacts/project-channel.block cli:/opt/gopath/src/github.com/hyperledger/fabric/peer/project-channel.block
+# 5. Enregistrement de la convention IBMSP -> CGNMSP
+echo "--- Enregistrement de la convention IBMSP -> CGNMSP ---"
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile $ORDERER_CA \
+  -C global-channel -n gouvernancecc \
+  --peerAddresses $PEER_CGN --tlsRootCertFiles $TLS_CGN \
+  --peerAddresses $PEER_IBM --tlsRootCertFiles $TLS_IBM \
+  --peerAddresses $PEER_HU --tlsRootCertFiles $TLS_HU \
+  --waitForEvent \
+  -c '{"function":"TrustContract:RegisterConvention","Args":["IBMSP", "CGNMSP", "Oncologie", "2030-12-31T23:59:59Z"]}'
 
-echo "-> Creation de global-channel par CGN..."
-exec_peer "cgn" "7051" "CGNMSP" "peer channel create -c global-channel -o $ORDERER --outputBlock ./global-channel.block --tls --cafile $CA_FILE"
+# 6. Enregistrement du consentement du patient alpha
+echo "--- Enregistrement du consentement du patient alpha ---"
+export CORE_PEER_LOCALMSPID=CGNMSP
+export CORE_PEER_ADDRESS=$PEER_CGN
+export CORE_PEER_TLS_ROOTCERT_FILE=$TLS_CGN
+export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/cgn.example.com/users/Admin@cgn.example.com/msp
 
-echo "-> CGN rejoint global-channel..."
-exec_peer "cgn" "7051" "CGNMSP" "peer channel join -b global-channel.block"
-echo "-> IB rejoint global-channel..."
-exec_peer "ib" "9051" "IBMSP" "peer channel join -b global-channel.block"
-echo "-> HU rejoint global-channel..."
-exec_peer "hu" "11051" "HUMSP" "peer channel join -b global-channel.block"
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile $ORDERER_CA \
+  -C global-channel -n consentcc \
+  --peerAddresses $PEER_CGN --tlsRootCertFiles $TLS_CGN \
+  --peerAddresses $PEER_IBM --tlsRootCertFiles $TLS_IBM \
+  --peerAddresses $PEER_HU --tlsRootCertFiles $TLS_HU \
+  --waitForEvent \
+  -c '{"function":"RegisterConsent","Args":["alpha", "CGNMSP", "o2b", "Oncologie", "2030-12-31"]}'
 
-echo "-> Creation de project-channel par CGN..."
-exec_peer "cgn" "7051" "CGNMSP" "peer channel create -c project-channel -o $ORDERER --outputBlock ./project-channel.block --tls --cafile $CA_FILE"
+# 7. Enregistrement de la politique d'accès pour "o2b"
+echo "--- Enregistrement de la politique d'accès pour o2b ---"
+export CORE_PEER_LOCALMSPID=IBMSP
+export CORE_PEER_ADDRESS=$PEER_IBM
+export CORE_PEER_TLS_ROOTCERT_FILE=$TLS_IBM
+export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/ib.example.com/users/Admin@ib.example.com/msp
 
-echo "-> CGN rejoint project-channel..."
-exec_peer "cgn" "7051" "CGNMSP" "peer channel join -b project-channel.block"
-echo "-> IB rejoint project-channel..."
-exec_peer "ib" "9051" "IBMSP" "peer channel join -b project-channel.block"
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile $ORDERER_CA \
+  -C project-channel -n policycc \
+  --peerAddresses $PEER_CGN --tlsRootCertFiles $TLS_CGN \
+  --peerAddresses $PEER_IBM --tlsRootCertFiles $TLS_IBM \
+  --waitForEvent \
+  -c '{"function":"RegisterResourcePolicy","Args":["o2b", "IBMSP", "[\"IBMSP\",\"CGNMSP\"]", "[\"Executer\",\"Lire\"]", "elevee", "00:00", "23:59"]}'
 
-echo "=== 7. Reseau initialise avec succes ! ==="
-docker ps --format "table {{.Names}}\t{{.Status}}"
+echo "=== Initialisation terminée avec succès ==="
