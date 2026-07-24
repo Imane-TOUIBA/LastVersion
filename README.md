@@ -36,6 +36,56 @@ Le réseau est composé de 3 organisations et 2 canaux distincts.
 - Node.js (v18.x ou v20.x) et npm
 - Binaires Hyperledger Fabric : `peer`, `cryptogen`, `configtxgen` accessibles dans le `$PATH`.
 
+1. Mise à jour du système et installation des outils de base
+
+- sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y curl git make jq python3-pip
+
+2. Installation de Docker et Docker Compose
+Le projet nécessite Docker et Docker Compose v2.0+
+.
+# Installation de Docker
+sudo apt-get install -y docker.io
+# Ajout de l'utilisateur au groupe docker (déconnexion/reconnexion nécessaire ensuite)
+sudo usermod -aG docker $USER
+# Installation du plugin Docker Compose
+sudo apt-get install -y docker-compose-v2
+
+3. Installation de Go (Version 1.22.2 recommandée)
+Le projet utilise Go pour les Smart Contracts
+
+wget https://go.dev/dl/go1.22.2.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
+
+# Configuration du PATH pour Go
+
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+source ~/.bashrc
+
+4. Installation de Node.js (Version 20.x)
+Nécessaire pour les services pep-service et relay-service
+
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+5. Installation des binaires Hyperledger Fabric (2.5.4) et Samples
+
+# Téléchargement du script officiel et installation des binaires/images
+# On installe la version 2.5.4 et l'orderer CA 1.5.7
+curl -sSL https://bit.ly/2ysbOFE | bash -s -- 2.5.4 1.5.7
+
+6. Configuration finale de l'environnement
+Pour que les commandes peer soient reconnues, vous devez configurer les variables d'environnement dans votre session (ou les ajouter à votre .bashrc) :
+
+export PATH=$HOME/bin:$PATH
+export FABRIC_CFG_PATH=$HOME/config
+export CORE_PEER_TLS_ENABLED=true
+
+7. Installation de la bibliothèque Python PyYAML
+Comme Ubuntu 24.04 gère strictement les environnements Python (PEP 668), il est recommandé d'utiliser le gestionnaire de paquets système pour installer PyYAML, nécessaire au script generate_network.py:
+
+sudo apt install -y python3-yaml
+
 ## Installation et déploiement
 
 1. Cloner le dépôt et se placer dans le répertoire :
