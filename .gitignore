@@ -20,3 +20,8 @@ wallet/
 *.swo
 *~
 .DS_Store
+organizations/
+channel-artifacts/
+node_modules/
+*.log
+benchmark_results/

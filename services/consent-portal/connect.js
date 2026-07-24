@@ -5,13 +5,14 @@ const crypto = require('crypto');
 const fs = require('fs').promises;
 const path = require('path');
 
-const MSP_ID = 'HUMSP';
-const CRYPTO_PATH = '/home/itouiba/abac-genomic/organizations/peerOrganizations/hu.example.com';
-const KEY_DIRECTORY_PATH = path.join(CRYPTO_PATH, 'users', 'Admin@hu.example.com', 'msp', 'keystore');
-const CERT_DIRECTORY_PATH = path.join(CRYPTO_PATH, 'users', 'Admin@hu.example.com', 'msp', 'signcerts');
-const TLS_CERT_PATH = path.join(CRYPTO_PATH, 'peers', 'peer0.hu.example.com', 'tls', 'ca.crt');
-const PEER_ENDPOINT = 'localhost:11051';
-const PEER_HOST_ALIAS = 'peer0.hu.example.com';
+// CORRECTION : Le portail agit maintenant en tant que CGNMSP pour gérer les consentements
+const MSP_ID = 'CGNMSP';
+const CRYPTO_PATH = '/home/itouiba/abac-genomic/organizations/peerOrganizations/cgn.example.com';
+const KEY_DIRECTORY_PATH = path.join(CRYPTO_PATH, 'users', 'Admin@cgn.example.com', 'msp', 'keystore');
+const CERT_DIRECTORY_PATH = path.join(CRYPTO_PATH, 'users', 'Admin@cgn.example.com', 'msp', 'signcerts');
+const TLS_CERT_PATH = path.join(CRYPTO_PATH, 'peers', 'peer0.cgn.example.com', 'tls', 'ca.crt');
+const PEER_ENDPOINT = 'localhost:7051';
+const PEER_HOST_ALIAS = 'peer0.cgn.example.com';
 
 async function newGrpcConnection() {
     const tlsRootCert = await fs.readFile(TLS_CERT_PATH);

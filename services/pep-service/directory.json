@@ -1,6 +1,10 @@
 {
-  "DrSmith": { "active": true, "role": "researcher", "clearance": "standard", "projects": ["Oncologie"] },
   "DrEinstein": { "active": true, "role": "senior_researcher", "clearance": "elevee", "projects": ["Oncologie", "Cardio"] },
+  "DrCurie": { "active": true, "role": "senior_researcher", "clearance": "elevee", "projects": ["Oncologie"] },
+  "Darwin": { "active": true, "role": "senior_researcher", "clearance": "elevee", "projects": ["Genomique"] },
+  "DrSmith": { "active": true, "role": "researcher", "clearance": "standard", "projects": ["Oncologie"] },
+  "DrTuring": { "active": true, "role": "researcher", "clearance": "standard", "projects": ["Oncologie", "Genomique"] },
+  "DrPasteur": { "active": true, "role": "researcher", "clearance": "standard", "projects": ["Cardio"] },
   "DrInactive": { "active": false, "role": "researcher", "clearance": "standard", "projects": ["Oncologie"] },
   "DrUnauthorized": { "active": true, "role": "researcher", "clearance": "standard", "projects": ["Cardio"] }
 }
